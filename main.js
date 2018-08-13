@@ -1,6 +1,7 @@
-const SHA256 = require('crypto-js/sha256');
+const SHA256 = require('crypto-js/sha256');  // import hashing algorithm used for block validation
 
 class Block{
+    // instantiate all of the needed variables
     constructor(index, timestamp, data, previousHash= ''){
         this.index = index
         this.timestamp = timestamp
@@ -9,14 +10,14 @@ class Block{
         this.hash = this.calculateHash();
     }
 
-    calculateHash(){
+    calculateHash(){ // returns string value hash that is unique and relative to the block's attributes ^
         return SHA256(this.index.previoushHash + this.timestamp + JSON.stringify(this.data)).toString();
     }
 }
 
 class BlockChain{
     constructor(){
-        this.chain = [this.createGenesisBlock()];
+        this.chain = [this.createGenesisBlock()]; // array[0] is genesis block, line 26 function
     }
 
     createGenesisBlock(){
@@ -54,7 +55,7 @@ class BlockChain{
 }
 
 let FirstBlock = new BlockChain(); 
-FirstBlock.addBlock(new Block(1, "8/13/2018", {amount: 1}))
+FirstBlock.addBlock(new Block(1, "8/13/2018", {amount: 1})) // adding example blocks
 FirstBlock.addBlock(new Block(2, "8/14/2018", {amount: 13}))
 FirstBlock.addBlock(new Block(3, "8/14/2018", {amount: 7}))
 

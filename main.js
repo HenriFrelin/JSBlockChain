@@ -33,17 +33,17 @@ class BlockChain{
         this.chain.push(newBlock);
     }
 
-    isChainValid(){
-        for(let i = 1; i < this.chain.length; i++){
+    isChainValid(){ 
+        for(let i = 1; i < this.chain.length; i++){ // scan chain (array) for hash discrepencies
             const currentBlock = this.chain[i];
             const previousBlock = this.chain[i - 1];
-            if(currentBlock.hash !== currentBlock.calculateHash()){
+            if(currentBlock.hash !== currentBlock.calculateHash()){ // is the current block's hash correct?
                 console.log("current block invalid")
                 console.log(currentBlock.hash)
                 console.log(currentBlock.calculateHash())
                 return false;
             }
-            if(currentBlock.previousHash !== previousBlock.hash){
+            if(currentBlock.previousHash !== previousBlock.hash){ // does the current block's previousHash match? 
                 console.log("previous block invalid")
                 return false;
             }
@@ -61,11 +61,15 @@ FirstBlock.addBlock(new Block(3, "8/14/2018", {amount: 7}))
 console.log('Is the blockchain valid? ' + FirstBlock.isChainValid())
 console.log(JSON.stringify(FirstBlock, null, 4))
 
-FirstBlock.chain[1].data = {amount : 100} 
+// Below are tests to ensure immutability of the chain. Uncomment to test!
+
+//FirstBlock.chain[1].data = {amount : 100} 
 // ^ This line changes block 1's data value, but doesn't update the hash, 
 // so when we check the block to be valid with it's own hash value, it returns false
 // This demonstrates the immutability of the blockchain. We test for this in line 40
-FirstBlock.chain[1].hash = FirstBlock.chain[1].calculateHash()
-// If one were to ALSO update the hash after making an alteration, the relationship
-// to the previous block would be broken. We test for this in line 46 
-console.log('Is the blockchain valid? ' + FirstBlock.isChainValid())
+
+//FirstBlock.chain[1].hash = FirstBlock.chain[1].calculateHash()
+// ^ If one were to ALSO update the hash after making an alteration, the relationship
+// of blocks(hashes) in the chain would be broken. We test for this in line 46 
+
+//console.log('Is the blockchain valid? ' + FirstBlock.isChainValid())

@@ -40,6 +40,7 @@ class BlockChain{
         this.difficulty = 4
         this.pendingTransactions = []; // empty array to store transaction pool
         this.miningReward = 10 
+        this.txnsPerBlock = 10 // change block size (modular)
     }
 
     createGenesisBlock(){
@@ -51,22 +52,56 @@ class BlockChain{
     }
 
     minePendingTransactions(miningRewardAddress){ // passed the miner's wallet address
-        let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash)
-        block.mineBlock(this.difficulty)
-        console.log('Block Mined!')
-        this.chain.push(block)
+
+        if(this.pendingTransactions.length < this.txnsPerBlock){ // if there are less than max block txns in the pool, process all
+            let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash)
+            block.mineBlock(this.difficulty)
+            console.log('Block Mined!')
+            this.chain.push(block)
+        }
+        //otherwise, process only the max block size (specified on line 43)
+        else{
+            let block = new Block(Date.now(), this.pendingTransactions.slice(this.pendingTransactions.length - this.txnsPerBlock, this.pendingTransactions.length), this.getLatestBlock().hash)
+            block.mineBlock(this.difficulty)
+            console.log('Block Mined!')
+            this.chain.push(block)
+        }
+        //let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash)
+        // above we slice the top # of txns that specifies the max txns per block
+        //block.transactions.push(new Transaction(null, miningRewardAddress, this.miningReward)) // miner processes his own reward txn 
+       
         // Below we reset the pendingTransaction pool and add one transaction
         // being the reward to send to the miner! 
-        this.pendingTransactions = [
-            new Transaction(null, miningRewardAddress, this.miningReward)
-        ]
+
+        //this.pendingTransactions.pop()
+
+        
+        if(this.pendingTransactions >= this.txnsPerBlock){
+            this.pendingTransactions = this.pendingTransactions.slice(0, this.pendingTransactions.length - this.txnsPerBlock) // prune the complete txns
+        }
+        else if(this.pendingTransactions < this.txnsPerBlock){
+            this.pendingTransactions = [] // then all txns have been processed! 
+        }
+
+       // this.pendingTransactions = [
+        //    new Transaction(null, miningRewardAddress, this.miningReward)
+        //]
+        
+
+
+
         // in BTC all pendingTransactions would NOT be passed into the new block,
         // but rather, only the ones chosen to be included, this is because block 
         // size cannot exceed 1mb and pending Transactions > 1mb
     }
 
     createTransaction(transaction){
-        this.pendingTransactions.push(transaction)
+        if(this.getBalance(transaction.fromAddress) <= 0 && transaction.fromAddress != 'null'){ // if it's from null it is not a standard transfer of funds (eg: rewards or testing)
+            console.log("Insufficient Funds")
+        }
+        else{
+            this.pendingTransactions.push(transaction)
+        }
         // add a transaction to the pending pool
     }
 
@@ -113,22 +148,26 @@ let FirstBlock = new BlockChain();
 FirstBlock.createTransaction(new Transaction('null', 'address2', 100))
 FirstBlock.createTransaction(new Transaction('null', 'address1', 100))
 FirstBlock.createTransaction(new Transaction('null', 'henri-wallet', 100))
+FirstBlock.minePendingTransactions('henri-wallet')
 // ^ preloading addresses with tokens! 
 FirstBlock.createTransaction(new Transaction('address1', 'address2', 3))
 FirstBlock.createTransaction(new Transaction('address2', 'address1', 35))
 // These transactions are now in the pendingTransactions pool
-
-console.log('\nStarting Mining Process...')
-FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
 console.log('\nMy new balance is ', FirstBlock.getBalance('henri-wallet'))
 console.log('\naddress1 balance is ', FirstBlock.getBalance('address1'))
 console.log('\naddress2 balance is ', FirstBlock.getBalance('address2'))
-
-// After this, the mining reward is now in the tx pool, so another start mining again!
-
 console.log('\nStarting Mining Process...')
-FirstBlock.minePendingTransactions('random-wallet') // example of another miner verifying my reward!
+
+FirstBlock.minePendingTransactions('henri-wallet')
+
+//while(FirstBlock.pendingTransactions.length > 0){
+//    FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
+//}
+//FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
+
 console.log('\nMy new balance is ', FirstBlock.getBalance('henri-wallet'))
+console.log('\naddress1 balance is ', FirstBlock.getBalance('address1'))
+console.log('\naddress2 balance is ', FirstBlock.getBalance('address2'))
 console.log(JSON.stringify(FirstBlock, null, 4))
 
 

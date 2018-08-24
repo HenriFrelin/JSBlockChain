@@ -40,7 +40,7 @@ class BlockChain{
         this.difficulty = 4
         this.pendingTransactions = []; // empty array to store transaction pool
         this.miningReward = 10 
-        this.txnsPerBlock = 10 // change block size (modular)
+        this.txnsPerBlock = 2 // change block size (modular)
     }
 
     createGenesisBlock(){
@@ -74,12 +74,12 @@ class BlockChain{
         // being the reward to send to the miner! 
 
         //this.pendingTransactions.pop()
-
+        console.log("PENDING TXN # = " + this.pendingTransactions.length)
         
-        if(this.pendingTransactions >= this.txnsPerBlock){
+        if(this.pendingTransactions.length > this.txnsPerBlock){
             this.pendingTransactions = this.pendingTransactions.slice(0, this.pendingTransactions.length - this.txnsPerBlock) // prune the complete txns
         }
-        else if(this.pendingTransactions < this.txnsPerBlock){
+        else if(this.pendingTransactions.length <= this.txnsPerBlock){
             this.pendingTransactions = [] // then all txns have been processed! 
         }
 
@@ -148,8 +148,9 @@ let FirstBlock = new BlockChain();
 FirstBlock.createTransaction(new Transaction('null', 'address2', 100))
 FirstBlock.createTransaction(new Transaction('null', 'address1', 100))
 FirstBlock.createTransaction(new Transaction('null', 'henri-wallet', 100))
-FirstBlock.minePendingTransactions('henri-wallet')
-// ^ preloading addresses with tokens! 
+while(FirstBlock.pendingTransactions.length > 0){
+    FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
+}// ^ preloading addresses with tokens! 
 FirstBlock.createTransaction(new Transaction('address1', 'address2', 3))
 FirstBlock.createTransaction(new Transaction('address2', 'address1', 35))
 // These transactions are now in the pendingTransactions pool
@@ -158,12 +159,9 @@ console.log('\naddress1 balance is ', FirstBlock.getBalance('address1'))
 console.log('\naddress2 balance is ', FirstBlock.getBalance('address2'))
 console.log('\nStarting Mining Process...')
 
-FirstBlock.minePendingTransactions('henri-wallet')
-
-//while(FirstBlock.pendingTransactions.length > 0){
-//    FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
-//}
-//FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
+while(FirstBlock.pendingTransactions.length > 0){
+    FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
+}
 
 console.log('\nMy new balance is ', FirstBlock.getBalance('henri-wallet'))
 console.log('\naddress1 balance is ', FirstBlock.getBalance('address1'))

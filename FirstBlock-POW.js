@@ -37,10 +37,10 @@ class Block{
 class BlockChain{
     constructor(){
         this.chain = [this.createGenesisBlock()]; // array[0] is genesis block, line 26 function
-        this.difficulty = 4
+        this.difficulty = 3
         this.pendingTransactions = []; // empty array to store transaction pool
         this.miningReward = 10 
-        this.txnsPerBlock = 2 // change block size (modular)
+        this.txnsPerBlock = 10 // change block size (modular)
     }
 
     createGenesisBlock(){
@@ -53,7 +53,9 @@ class BlockChain{
 
     minePendingTransactions(miningRewardAddress){ // passed the miner's wallet address
 
-        if(this.pendingTransactions.length < this.txnsPerBlock){ // if there are less than max block txns in the pool, process all
+        this.pendingTransactions.push(new Transaction(null, miningRewardAddress, this.miningReward))
+
+        if(this.pendingTransactions.length - 1 < this.txnsPerBlock){ // if there are less than max block txns in the pool, process all
             let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash)
             block.mineBlock(this.difficulty)
             console.log('Block Mined!')
@@ -74,25 +76,15 @@ class BlockChain{
         // being the reward to send to the miner! 
 
         //this.pendingTransactions.pop()
-        console.log("PENDING TXN # = " + this.pendingTransactions.length)
+        var p = (this.pendingTransactions.length - 1).toString()
+        console.log("PENDING TXN # = " + p)
         
-        if(this.pendingTransactions.length > this.txnsPerBlock){
+        if(this.pendingTransactions.length - 1 > this.txnsPerBlock){
             this.pendingTransactions = this.pendingTransactions.slice(0, this.pendingTransactions.length - this.txnsPerBlock) // prune the complete txns
         }
-        else if(this.pendingTransactions.length <= this.txnsPerBlock){
+        else if(this.pendingTransactions.length - 1 <= this.txnsPerBlock){
             this.pendingTransactions = [] // then all txns have been processed! 
         }
-
-       // this.pendingTransactions = [
-        //    new Transaction(null, miningRewardAddress, this.miningReward)
-        //]
-        
-
-
-
-        // in BTC all pendingTransactions would NOT be passed into the new block,
-        // but rather, only the ones chosen to be included, this is because block 
-        // size cannot exceed 1mb and pending Transactions > 1mb
     }
 
     createTransaction(transaction){
@@ -142,9 +134,39 @@ class BlockChain{
     }
 }
 
+
 let FirstBlock = new BlockChain(); 
 // Demo Transactions -> 'address(x)' is acting as a public key
 
+for(i = 0; i < 100; i++){ // preload every account with 100 tokens
+    var publicKey = 'address'
+    publicKey += i.toString()
+    FirstBlock.createTransaction(new Transaction('null', publicKey, 100))
+}
+
+while(FirstBlock.pendingTransactions.length > 0){
+    FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
+}
+
+for(i = 0; i < 500; i++){ // create random transactions
+    var key1 = Math.floor(Math.random() * Math.floor(101));
+    var key2 = Math.floor(Math.random() * Math.floor(101));
+    var amount = Math.floor(Math.random() * Math.floor(100000));
+    var temp1 = 'address'
+    var temp2 = 'address'
+    var pubKey1 = temp1 += key1.toString();
+    var pubKey2 = temp2 += key2.toString();
+    FirstBlock.createTransaction(new Transaction(pubKey1, pubKey2, amount))
+    console.log(pubKey1 + " -> " + pubKey2 + " : " + amount + " tokens")
+}
+
+while(FirstBlock.pendingTransactions.length > 0){
+    FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
+}
+
+//console.log(JSON.stringify(FirstBlock, null, 4))
+
+/*
 FirstBlock.createTransaction(new Transaction('null', 'address2', 100))
 FirstBlock.createTransaction(new Transaction('null', 'address1', 100))
 FirstBlock.createTransaction(new Transaction('null', 'henri-wallet', 100))
@@ -163,39 +185,13 @@ while(FirstBlock.pendingTransactions.length > 0){
     FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
 }
 
-console.log('\nMy new balance is ', FirstBlock.getBalance('henri-wallet'))
+console.log('\nMy new baqlance is ', FirstBlock.getBalance('henri-wallet'))
 console.log('\naddress1 balance is ', FirstBlock.getBalance('address1'))
 console.log('\naddress2 balance is ', FirstBlock.getBalance('address2'))
 console.log(JSON.stringify(FirstBlock, null, 4))
 
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-
-
-
-// Below you will find test code used when building the blockchain. It can be used
-// for demonstrative & testing purposes. 
-/*
-console.log('Mining Block 1... ')
-FirstBlock.addBlock(new Block(1, "8/13/2018", {amount: 1})) // adding example blocks
-console.log('Mining Block 2... ')
-FirstBlock.addBlock(new Block(2, "8/14/2018", {amount: 13}))
-console.log('Mining Block 3... ')
-FirstBlock.addBlock(new Block(3, "8/14/2018", {amount: 7}))
-
-console.log('Is the blockchain valid? ' + FirstBlock.isChainValid())
-console.log(JSON.stringify(FirstBlock, null, 4))
 */
 
-// Below are tests to ensure immutability of the chain. Uncomment to test!
 
-//FirstBlock.chain[1].data = {amount : 100} 
-// ^ This line changes block 1's data value, but doesn't update the hash, 
-// so when we check the block to be valid with it's own hash value, it returns false
-// This demonstrates the immutability of the blockchain. We test for this in line 40
 
-//FirstBlock.chain[1].hash = FirstBlock.chain[1].calculateHash()
-// ^ If one were to ALSO update the hash after making an alteration, the relationship
-// of blocks(hashes) in the chain would be broken. We test for this in line 46 
 
-//console.log('Is the blockchain valid? ' + FirstBlock.isChainValid())

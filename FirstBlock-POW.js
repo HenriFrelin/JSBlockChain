@@ -10,12 +10,20 @@ class Transaction{ // constructor class for transaction(s) for each block
 
 class Block{
     // instantiate all of the needed variables
-    constructor(timestamp, transactions, previousHash = ''){
+    constructor(timestamp, transactions, previousHash = '', blockID){
         this.timestamp = timestamp
         this.transactions = transactions
         this.previousHash = previousHash
         this.hash = this.calculateHash();
         this.nonce = 0 // simple iterator for mineBlock
+        this.blockID = blockID
+    }
+
+    print(){
+        console.log("\n       Block " + this.blockID + "\n--------------------\nTimestamp = " + this.timestamp.toString() 
+        + "\nCurr Hash = " + this.hash.toString() + "\nPrev Hash = " + this.previousHash.toString() + 
+        "\n# of Txns = " + this.transactions.length.toString() + "\n          . \n          .\n          .")
+        
     }
 
     calculateHash(){ // returns string value hash that is unique and relative to the block's attributes ^
@@ -30,21 +38,27 @@ class Block{
             this.hash = this.calculateHash()
             // keep caclulating hash with nonce++ until # 0s prefaing hash = difficulty
         }
-        console.log("Block: " + this.hash)
+        this.print()
     }
+    
 }
 
 class BlockChain{
     constructor(){
-        this.chain = [this.createGenesisBlock()]; // array[0] is genesis block, line 26 function
-        this.difficulty = 3
+        this.difficulty = 1
         this.pendingTransactions = []; // empty array to store transaction pool
         this.miningReward = 10 
         this.txnsPerBlock = 10 // change block size (modular)
+        this.blockID = 1
+        this.chain = [this.createGenesisBlock()]; // array[0] is genesis block, line 26 function
     }
 
     createGenesisBlock(){
-        return new Block(Date.parse("2018-01-12"), [], "0") // index in array, date, data, previous hash
+
+        console.log("\n    Genesis Block    \n--------------------\nMining Difficulty = " + this.difficulty.toString() 
+        + "\nMining Reward = " + this.miningReward.toString() + "\nTxns Per Block = " + this.txnsPerBlock.toString() + "\n          . \n          .\n          .")
+        
+        return new Block(Date.parse("2018-01-12"), [], "0", null) // index in array, date, data, previous hash
     }
 
     getLatestBlock(){
@@ -56,35 +70,27 @@ class BlockChain{
         this.pendingTransactions.push(new Transaction(null, miningRewardAddress, this.miningReward))
 
         if(this.pendingTransactions.length - 1 < this.txnsPerBlock){ // if there are less than max block txns in the pool, process all
-            let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash)
+            let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash, this.blockID)
             block.mineBlock(this.difficulty)
-            console.log('Block Mined!')
             this.chain.push(block)
         }
         //otherwise, process only the max block size (specified on line 43)
         else{
-            let block = new Block(Date.now(), this.pendingTransactions.slice(this.pendingTransactions.length - this.txnsPerBlock, this.pendingTransactions.length), this.getLatestBlock().hash)
+            let block = new Block(Date.now(), this.pendingTransactions.slice(this.pendingTransactions.length - this.txnsPerBlock, this.pendingTransactions.length), this.getLatestBlock().hash, this.blockID)
             block.mineBlock(this.difficulty)
-            console.log('Block Mined!')
             this.chain.push(block)
         }
-        //let block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash)
-        // above we slice the top # of txns that specifies the max txns per block
-        //block.transactions.push(new Transaction(null, miningRewardAddress, this.miningReward)) // miner processes his own reward txn 
-       
-        // Below we reset the pendingTransaction pool and add one transaction
-        // being the reward to send to the miner! 
-
-        //this.pendingTransactions.pop()
-        var p = (this.pendingTransactions.length - 1).toString()
-        console.log("PENDING TXN # = " + p)
         
+        var p = (this.pendingTransactions.length - 1).toString()        
+        
+        //Below we prune the COMPLETE txns from the pool
         if(this.pendingTransactions.length - 1 > this.txnsPerBlock){
             this.pendingTransactions = this.pendingTransactions.slice(0, this.pendingTransactions.length - this.txnsPerBlock) // prune the complete txns
         }
         else if(this.pendingTransactions.length - 1 <= this.txnsPerBlock){
             this.pendingTransactions = [] // then all txns have been processed! 
         }
+        this.blockID++
     }
 
     createTransaction(transaction){
@@ -148,16 +154,16 @@ while(FirstBlock.pendingTransactions.length > 0){
     FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
 }
 
-for(i = 0; i < 500; i++){ // create random transactions
-    var key1 = Math.floor(Math.random() * Math.floor(101));
-    var key2 = Math.floor(Math.random() * Math.floor(101));
-    var amount = Math.floor(Math.random() * Math.floor(100000));
+for(i = 0; i < 100; i++){ // create random transactions
+    var key1 = Math.floor((Math.random() * 100) + 1)
+    var key2 = Math.floor((Math.random() * 100) + 1)
+    var amount = Math.floor((Math.random() * 10) + 1)
     var temp1 = 'address'
     var temp2 = 'address'
     var pubKey1 = temp1 += key1.toString();
     var pubKey2 = temp2 += key2.toString();
     FirstBlock.createTransaction(new Transaction(pubKey1, pubKey2, amount))
-    console.log(pubKey1 + " -> " + pubKey2 + " : " + amount + " tokens")
+    //console.log(pubKey1 + " -> " + pubKey2 + " : " + amount + " tokens")
 }
 
 while(FirstBlock.pendingTransactions.length > 0){
@@ -165,33 +171,3 @@ while(FirstBlock.pendingTransactions.length > 0){
 }
 
 //console.log(JSON.stringify(FirstBlock, null, 4))
-
-/*
-FirstBlock.createTransaction(new Transaction('null', 'address2', 100))
-FirstBlock.createTransaction(new Transaction('null', 'address1', 100))
-FirstBlock.createTransaction(new Transaction('null', 'henri-wallet', 100))
-while(FirstBlock.pendingTransactions.length > 0){
-    FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
-}// ^ preloading addresses with tokens! 
-FirstBlock.createTransaction(new Transaction('address1', 'address2', 3))
-FirstBlock.createTransaction(new Transaction('address2', 'address1', 35))
-// These transactions are now in the pendingTransactions pool
-console.log('\nMy new balance is ', FirstBlock.getBalance('henri-wallet'))
-console.log('\naddress1 balance is ', FirstBlock.getBalance('address1'))
-console.log('\naddress2 balance is ', FirstBlock.getBalance('address2'))
-console.log('\nStarting Mining Process...')
-
-while(FirstBlock.pendingTransactions.length > 0){
-    FirstBlock.minePendingTransactions('henri-wallet') // mine with miner's reward address sent
-}
-
-console.log('\nMy new baqlance is ', FirstBlock.getBalance('henri-wallet'))
-console.log('\naddress1 balance is ', FirstBlock.getBalance('address1'))
-console.log('\naddress2 balance is ', FirstBlock.getBalance('address2'))
-console.log(JSON.stringify(FirstBlock, null, 4))
-
-*/
-
-
-
-
